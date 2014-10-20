@@ -2,6 +2,7 @@ import Prelude
 import EventLoop
 import EventLoop.Input
 import EventLoop.Output
+import Debug.Trace
 
 type Vector = (Float, Float)
 
@@ -14,6 +15,8 @@ data State = Store { speed :: Speed
                    }
 ballName = "Ball"
 rad = 50 :: Float           
+
+--showK :: InKeyboard
                    
 beginState = Store beginSpeed beginPos
 beginSpeed = (8, (0.75, 0.25))
@@ -32,6 +35,9 @@ process s (InSysMessage Background) = ([drawBall beginPos], s)
 process (Store speed pos) (InSysMessage Time) = ([moveBall p], (Store s p))
                                             where
                                                 (s, p) = newSpeedPosition speed pos
+process s inding    = case inding of    
+        (InKeyboard (KeyPress k))  -> trace ("keyboard: "++k) ([],s)
+        (InMouse m)     -> trace ("mouse: "++(show m)) ([],s)
 
 process s _ = ([], s)
                                                 

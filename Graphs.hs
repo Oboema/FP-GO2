@@ -25,12 +25,22 @@ import EventLoop.Output
 type Vector = (Float, Float)
         
 ----- Graph -----
+type Vector     = (FLoat, Float)
+type Force      = (Vector, Float)
+type Elasticity = Float -- yet to be defined. Use 1 for now.
 
-type Label   = Char
-type Weight  = Int
+type Label    = Char
+type Weight   = Force
+type EdgeForce = Float
+type Tolerance  = PressForce Float
+                | PullForce  Float
 
-type Node = (Label, Pos, ColorG)
-type Edge = (Label, Label, ColorG, Weight)
+fz m = ((0,-1), m)
+
+type MetaEdge = (EdgeForce, Tolerance, Elasticity, Weight)
+
+type Node = (Label, Pos, Force)
+type Edge = (Label, Label, MetaEdge )
 
 data Graph = Graph
             { nodes    :: [Node]
@@ -42,7 +52,7 @@ data Graph = Graph
 
 ----- Graph Graphical -----            
             
-data ColorG = Red
+data ColorRGB = Red
             | Blue
             | Green
             | Purple
