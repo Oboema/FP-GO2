@@ -1,4 +1,5 @@
-module Graphs 
+module Graphs where
+{- 
         ( Label
         , Weight
         , Node
@@ -15,32 +16,38 @@ module Graphs
         , KeyboardButton
         , onNode
         , preEventloop
-        ) where
+        ) 
+-} 
 
 import Prelude
 import EventLoop        
 import EventLoop.Input as EI
 import EventLoop.Output
 
+
 type Vector = (Float, Float)
-        
+type Weight = Int -- weight of a weighted graph, kept for compatibility. We use Mass for masses
 ----- Graph -----
-type Vector     = (FLoat, Float)
+-- type Vector     = (FLoat, Float)
 type Force      = (Vector, Float)
 type Elasticity = Float -- yet to be defined. Use 1 for now.
 
-type Label    = Char
-type Weight   = Force
-type EdgeForce = Float
-type Tolerance  = PressForce Float
-                | PullForce  Float
+type Label    = String
+type Mass     = Float
+type EdgeForce= Float
 
-fz m = ((0,-1), m)
+data Tolerance  = Tolerance 
+                { pressForce :: Float
+                , pullForce  :: Float
+                }   deriving (Eq, Show)
 
-type MetaEdge = (EdgeForce, Tolerance, Elasticity, Weight)
+
+type MetaEdge = (EdgeForce, Tolerance, Elasticity, Mass)
 
 type Node = (Label, Pos, Force)
+    --deriving Show
 type Edge = (Label, Label, MetaEdge )
+    --deriving Show
 
 data Graph = Graph
             { nodes    :: [Node]
@@ -52,7 +59,7 @@ data Graph = Graph
 
 ----- Graph Graphical -----            
             
-data ColorRGB = Red
+data ColorG = Red
             | Blue
             | Green
             | Purple
@@ -105,6 +112,9 @@ data GraphInput = MouseUp MouseButton Pos
                 | KeyPress KeyboardButton
                 | Start
                
+
+
+
 -- | Checkes to see if there is a node on a certain position                
 onNode :: [Node] -> Pos -> Maybe Node
 onNode [] _ = Nothing
@@ -153,11 +163,11 @@ keyboardToGraphIn (EI.KeyPress k) = Graphs.KeyPress k
 Converts the graphical graph output to standardized 'Eventloop.Output.Graphical' output
 -}
 graphOutputToGraphical :: GraphOutput -> [Graphical]
-graphOutputToGraphical (NodeG l pos colG) = [Draw (Container [nodeG, textG]) [l]]
+graphOutputToGraphical (NodeG l pos colG) = [Draw (Container [nodeG, textG]) l]
                                         where
                                             col   = colorGToColor colG
-                                            nodeG = GObject [l] (Arc black 1 col pos nodeRadius 0 360) []
-                                            textG = GObject [l] (Text white 1 white pos textSize textFont [l] True) []
+                                            nodeG = GObject l (Arc black 1 col pos nodeRadius 0 360) []
+                                            textG = GObject l (Text white 1 white pos textSize textFont l True) []
 
 graphOutputToGraphical (LineG (l1, pos1, _) (l2, pos2, _) colG thick direct) | direct == Directed   = [Draw (Container [line, arrow1, arrow2]) name]
                                                                              | direct == Undirected = [Draw line name]
@@ -204,13 +214,13 @@ graphOutputToGraphical (Instructions is) = [RemoveGroup "instructions", Draw isG
                                             isG         = map (\(str, top) -> defaultText str (0, top)) isWithPos
                                             isG'        = Container (lineG:isG)
 
-graphOutputToGraphical (RemoveNodeG l)     = [RemoveGroup [l]]
+graphOutputToGraphical (RemoveNodeG l)     = [RemoveGroup l]
 graphOutputToGraphical (RemoveEdgeG l1 l2) = [RemoveGroup (lineName l1 l2)]
 graphOutputToGraphical (ClearAllG)         = [ClearAll]                                        
            
 -- | Returns a standardized naming scheme for lines in the graph           
-lineName :: Char -> Char -> String
-lineName l1 l2 = "line."++[l1]++"."++[l2]
+lineName :: String -> String -> String
+lineName l1 l2 = "line."++l1++"."++l2
            
 -- | Translates the thickness to a float           
 thicknessToFloat :: Thickness -> Float
@@ -250,7 +260,7 @@ vectorize (x1, y1) (x2, y2) = (x2 - x1, y2 - y1)
 -- | Returns the vector perpendicular on the given vector between the 2 points. Always has positive y and vector length 1; y is inverted in canvas
 downPerpendicularTo :: Pos -> Pos -> Vector
 downPerpendicularTo (x1, y1) (x2, y2) | y2 > y1   = ((-1) * sign * (abs yv) / size, (abs xv) / size)
-                                    | otherwise = (       sign * (abs yv) / size, (abs xv) / size)
+                                      | otherwise = (       sign * (abs yv) / size, (abs xv) / size)
                                       where
                                           (xv, yv) = vectorize (x1, y1) (x2, y2)
                                           size     = vectorSize (xv, yv)
@@ -267,4 +277,4 @@ upPerpendicularTo p1 p2 = ((-1) * xp, (-1) * yp)
                           
 -- | Returns the size of the vector                          
 vectorSize :: Vector -> Float
-vectorSize (x, y) = sqrt (x^2 + y^2)                                                                       
+vectorSize (x, y) = sqrt (x^2 + y^2)    
